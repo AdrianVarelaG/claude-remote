@@ -12,8 +12,6 @@ services:
     environment:
       - PASSWORD=tu-password-seguro
       - SSH_AUTH_SOCK=/ssh-agent
-    ports:
-      - "127.0.0.1:8080:8080"
     command: --auth password /workspace
 
   workspace-nextjs:
@@ -29,8 +27,6 @@ services:
     environment:
       - PASSWORD=tu-password-seguro
       - SSH_AUTH_SOCK=/ssh-agent
-    ports:
-      - "127.0.0.1:8081:8080"
     command: --auth password /workspace
 
 volumes:
