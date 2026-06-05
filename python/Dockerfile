@@ -16,7 +16,7 @@ RUN if [ "$USER_UID" != "1000" ]; then \
 
 
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs python3 python3-pip python3-venv tmux \
+    && apt-get install -y nodejs python3 python3-pip python3-venv tmux jq zsh git \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -24,7 +24,15 @@ RUN npm install -g @anthropic-ai/claude-code pyright
 
 RUN pip3 install --break-system-packages black
 
+RUN usermod -s /usr/bin/zsh coder
+
 USER coder
+
+RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended \
+    && git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions \
+    && git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting \
+    && sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting)/' ~/.zshrc \
+    && echo 'export HISTFILE=~/.config/.zsh_history' >> ~/.zshrc
 
 RUN code-server --install-extension ms-python.python \
     && code-server --install-extension ms-python.black-formatter

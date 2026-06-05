@@ -6,7 +6,6 @@ services:
         USER_UID: 950
         USER_GID: 950
     container_name: workspace-base
-    user: "950:950"
     restart: unless-stopped
     volumes:
       - ../.claude:/home/coder/.claude
@@ -21,7 +20,7 @@ services:
       - "8080:8080"
     # 2. Mapeo para poder ver los servicios del localhost de TrueNAS
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "host.docker.internal:172.16.0.1"
     command: --auth password /workspace
 
   workspace-python:
@@ -36,7 +35,7 @@ services:
       - ../.claude:/home/coder/.claude
       - ../proyectos/python:/workspace
       - python-config:/home/coder/.config
-      - ./python/settings.json:/workspace/.claude/settings.json
+      - ./python/settings.local.json:/workspace/.claude/settings.local.json
       - ./.ssh-contenedor:/home/coder/.ssh
       # 1. Montamos ÚNICAMENTE la llave privada del home en modo Lectura Exclusiva (:ro)
       - ~/.ssh/id_ed25519:/home/coder/.ssh/id_ed25519:ro
@@ -44,9 +43,10 @@ services:
       - PASSWORD=${WORKSPACE_PASSWORD}
     ports:
       - "8081:8080"
+      - "8000:8000"
     # 2. Mapeo para poder ver los servicios del localhost de TrueNAS
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "host.docker.internal:172.16.0.1"
     command: --auth password /workspace
 
   workspace-nextjs:
@@ -68,7 +68,7 @@ services:
     environment:
       - PASSWORD=${WORKSPACE_PASSWORD}
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "host.docker.internal:172.16.0.1"
     command: --auth password /workspace
 
   workspace-node:
@@ -92,7 +92,7 @@ services:
     ports:
       - "8082:8080"
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "host.docker.internal:172.16.0.1"
     command: --auth password /workspace
 
 volumes:

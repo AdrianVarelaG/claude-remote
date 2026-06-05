@@ -1,0 +1,41 @@
+{
+  "enabledPlugins": {
+    "pyright-lsp@claude-plugins-official": true
+  },
+  "env": {
+    "PYTHONPATH": "/workspace/src",
+    "DATABASE_URL": "postgresql+asyncpg://sat_user:sat_password@host.docker.internal:5432/sat_db",
+    "DB_REQUIRE_SSL": "false"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(.venv/bin/python3:*)",
+      "Bash(.venv/bin/pytest:*)",
+      "Bash(.venv/bin/alembic:*)",
+      "Bash(.venv/bin/black:*)",
+      "Bash(.venv/bin/flake8:*)",
+      "Bash(.venv/bin/mypy:*)",
+      "Bash(pip:*)",
+      "Bash(pip3:*)",
+      "Bash(pytest:*)",
+      "Bash(uvicorn:*)",
+      "Bash(black:*)",
+      "Bash(alembic:*)",
+      "Bash(git:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(echo:*)",
+      "Bash(env:*)"
+    ],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(curl:*)",
+      "Bash(wget:*)",
+      "Bash(docker:*)",
+      "Bash(docker-compose:*)"
+    ]
+  }
+}

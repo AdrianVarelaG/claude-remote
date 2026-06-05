@@ -1,15 +1,9 @@
 {
-  "enabledPlugins": {
-    "pyright-lsp@claude-plugins-official": true
-  },
   "permissions": {
     "allow": [
-      "Bash(python3:*)",
-      "Bash(pip:*)",
-      "Bash(pip3:*)",
-      "Bash(pytest:*)",
-      "Bash(uvicorn:*)",
-      "Bash(black:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(node:*)",
       "Bash(git:*)",
       "Bash(ls:*)",
       "Bash(cat:*)",
@@ -21,5 +15,8 @@
       "Bash(curl:*)",
       "Bash(wget:*)"
     ]
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true
   }
 }
