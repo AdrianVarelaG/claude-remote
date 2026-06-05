@@ -16,18 +16,15 @@ RUN if [ "$USER_UID" != "1000" ]; then \
 
 
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs python3 python3-pip python3-venv tmux \
+    && apt-get install -y nodejs tmux jq \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g @anthropic-ai/claude-code pyright
-
-RUN pip3 install --break-system-packages black
+RUN npm install -g @anthropic-ai/claude-code
 
 USER coder
 
-RUN code-server --install-extension ms-python.python \
-    && code-server --install-extension ms-python.black-formatter
+RUN mkdir -p /home/coder/.config/code-server
 
 WORKDIR /workspace
 

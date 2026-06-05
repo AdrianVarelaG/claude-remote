@@ -1,38 +1,102 @@
 services:
+  workspace-base:
+    build:
+      context: ./
+      args:
+        USER_UID: 950
+        USER_GID: 950
+    container_name: workspace-base
+    user: "950:950"
+    restart: unless-stopped
+    volumes:
+      - ../.claude:/home/coder/.claude
+      - ./:/workspace
+      - base-config:/home/coder/.config
+      - ./.ssh-contenedor:/home/coder/.ssh
+      # 1. Montamos ÚNICAMENTE la llave privada del home en modo Lectura Exclusiva (:ro)
+      - ~/.ssh/id_ed25519:/home/coder/.ssh/id_ed25519:ro
+    environment:
+      - PASSWORD=${WORKSPACE_PASSWORD}
+    ports:
+      - "8080:8080"
+    # 2. Mapeo para poder ver los servicios del localhost de TrueNAS
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: --auth password /workspace
+
   workspace-python:
-    build: ./python
+    build: 
+      context: ./python
+      args:
+        USER_UID: 950 
+        USER_GID: 950
     container_name: workspace-python
     restart: unless-stopped
     volumes:
-      - ~/.claude:/home/coder/.claude
-      - ~/proyectos/python:/workspace
+      - ../.claude:/home/coder/.claude
+      - ../proyectos/python:/workspace
       - python-config:/home/coder/.config
       - ./python/settings.json:/workspace/.claude/settings.json
-      - ${SSH_AUTH_SOCK}:/ssh-agent
+      - ./.ssh-contenedor:/home/coder/.ssh
+      # 1. Montamos ÚNICAMENTE la llave privada del home en modo Lectura Exclusiva (:ro)
+      - ~/.ssh/id_ed25519:/home/coder/.ssh/id_ed25519:ro
     environment:
-      - PASSWORD=tu-password-seguro
-      - SSH_AUTH_SOCK=/ssh-agent
+      - PASSWORD=${WORKSPACE_PASSWORD}
     ports:
-      - "8080:8080"
+      - "8081:8080"
+    # 2. Mapeo para poder ver los servicios del localhost de TrueNAS
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     command: --auth password /workspace
 
   workspace-nextjs:
-    build: ./nextjs
+    build: 
+      context: ./nextjs
+      args:
+        USER_UID: 950 
+        USER_GID: 950
     container_name: workspace-nextjs
     restart: unless-stopped
     volumes:
-      - ~/.claude:/home/coder/.claude
-      - ~/proyectos/nextjs:/workspace
+      - ../.claude:/home/coder/.claude
+      - ../proyectos/nextjs:/workspace
       - nextjs-config:/home/coder/.config
       - ./nextjs/settings.json:/workspace/.claude/settings.json
-      - ${SSH_AUTH_SOCK}:/ssh-agent
+      - ./.ssh-contenedor:/home/coder/.ssh
+      # Montamos la misma llave privada aquí
+      - ~/.ssh/id_ed25519:/home/coder/.ssh/id_ed25519:ro
     environment:
-      - PASSWORD=tu-password-seguro
-      - SSH_AUTH_SOCK=/ssh-agent
+      - PASSWORD=${WORKSPACE_PASSWORD}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: --auth password /workspace
+
+  workspace-node:
+    build:
+      context: ./node
+      args:
+        USER_UID: 950
+        USER_GID: 950
+    container_name: workspace-node
+    restart: unless-stopped
+    volumes:
+      - ../.claude:/home/coder/.claude
+      - ../proyectos/xml-pdf:/workspace
+      - node-config:/home/coder/.config
+      - ./node/settings.json:/workspace/.claude/settings.json
+      - ./.ssh-contenedor:/home/coder/.ssh
+      # Montamos la misma llave privada aquí
+      - ~/.ssh/id_ed25519:/home/coder/.ssh/id_ed25519:ro
+    environment:
+      - PASSWORD=${WORKSPACE_PASSWORD}
     ports:
-      - "8081:8080"
+      - "8082:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     command: --auth password /workspace
 
 volumes:
   python-config:
   nextjs-config:
+  node-config:
+  base-config:
