@@ -91,6 +91,7 @@ services:
       - PASSWORD=${WORKSPACE_PASSWORD}
     ports:
       - "8082:8080"
+      - "3000:3000"
     extra_hosts:
       - "host.docker.internal:172.16.0.1"
     command: --auth password /workspace
