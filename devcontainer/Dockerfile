@@ -12,9 +12,7 @@ RUN if [ "$USER_UID" != "1000" ]; then \
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl ca-certificates git tmux jq \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs zsh \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -22,7 +20,8 @@ RUN npm install -g \
     @anthropic-ai/claude-code \
     typescript \
     typescript-language-server \
-    pyright
+    pyright \
+    && npm cache clean --force
 
 RUN usermod -s /usr/bin/zsh coder
 
