@@ -4,9 +4,15 @@
   gather_facts: true
 
   roles:
-    - role: dataset       # Ensure ZFS dataset directories exist
-    - role: runtime       # Install Node.js, Claude Code, jq into dataset
-    - role: host_shell    # Install zsh, oh-my-zsh, configure .zshrc for claude user
-    - role: claude_config # Deploy settings.json + statusline.sh, create ~/.claude symlink
-    - role: repos         # Clone master repo + submodules into dataset
-    - role: devcontainers # Render docker-compose.yml, ensure .env exists
+    - role: dataset
+      tags: [dataset]
+    - role: runtime
+      tags: [runtime]
+    - role: host_shell
+      tags: [host_shell]
+    - role: claude_config
+      tags: [claude_config]
+    - role: repos
+      tags: [repos]
+    - role: devcontainers
+      tags: [devcontainers]

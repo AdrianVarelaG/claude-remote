@@ -31,6 +31,7 @@ ansible-playbook -i ansible/inventory.ini ansible/playbook.yml --tags devcontain
 
 # Add a new project
 git submodule add <repo-url> repositories/<name>
+# (.gitmodules is auto-created by git on first submodule add)
 # Then add an entry to ansible/group_vars/all.yml under `projects:`
 # Then re-run the playbook
 ```
