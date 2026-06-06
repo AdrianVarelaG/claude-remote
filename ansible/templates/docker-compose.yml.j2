@@ -17,7 +17,7 @@ services:
       - "{{ repositories_path }}:/repositories"
       - devcontainer-all-config:/home/coder/.config
       - "{{ master_repo_dest }}/.ssh-contenedor:/home/coder/.ssh"
-      - "~/.ssh/id_ed25519:/home/coder/.ssh/id_ed25519:ro"
+      - "{{ home_path }}/.ssh/id_ed25519:/home/coder/.ssh/id_ed25519:ro"
     environment:
       - PASSWORD=${WORKSPACE_PASSWORD}
     ports:
@@ -38,7 +38,7 @@ services:
       - "{{ repositories_path }}/{{ project.name }}:/workspace"
       - devcontainer-{{ project.name }}-config:/home/coder/.config
       - "{{ master_repo_dest }}/.ssh-contenedor:/home/coder/.ssh"
-      - "~/.ssh/id_ed25519:/home/coder/.ssh/id_ed25519:ro"
+      - "{{ home_path }}/.ssh/id_ed25519:/home/coder/.ssh/id_ed25519:ro"
     environment:
       - PASSWORD=${WORKSPACE_PASSWORD}
     ports:

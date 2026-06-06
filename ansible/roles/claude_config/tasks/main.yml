@@ -15,6 +15,6 @@
 - name: Create ~/.claude symlink → dataset claude-config dir
   ansible.builtin.file:
     src: "{{ claude_config_path }}"
-    dest: "~/.claude"
+    dest: "{{ home_path }}/.claude"
     state: link
     force: true
