@@ -46,8 +46,6 @@ services:
     extra_hosts:
       - "host.docker.internal:{{ host_docker_internal_ip }}"
     command: --auth password /workspace
-    depends_on:
-      - devcontainer-all
 
 {% endfor %}
 
