@@ -1,0 +1,36 @@
+---
+# ZFS dataset root — all runtime, config, and repos live here
+# TODO: Replace with your actual pool path (e.g. /mnt/tank/apps/claude-remote)
+pool_path: /mnt/POOL/apps/claude-remote
+
+# Derived paths (do not edit)
+runtime_path: "{{ pool_path }}/runtime"
+home_path: "{{ pool_path }}/home"
+claude_config_path: "{{ pool_path }}/claude-config"
+repositories_path: "{{ pool_path }}/repositories"
+
+# Dev-container port base (aggregate container gets base_port, projects get base_port+1, +2, ...)
+base_port: 8080
+
+# TrueNAS host IP that code-server containers see as "the host"
+host_docker_internal_ip: "172.16.0.1"
+
+# Project submodules — each becomes a devcontainer-<name> service and a git submodule
+# TODO: Add your real projects here
+projects:
+  - name: xml-pdf
+    port: 8081
+  # - name: my-other-project
+  #   port: 8082
+
+# Workspace password for code-server (set in .env on the host)
+workspace_password_env: WORKSPACE_PASSWORD
+
+# UID/GID for the coder user inside dev containers (match TrueNAS claude user)
+container_uid: 950
+container_gid: 950
+
+# Git repo URL for this master repo (used by repos role to clone on the host)
+# TODO: Replace with your actual Git remote URL
+master_repo_url: "git@github.com:YOUR_USER/claude-remote.git"
+master_repo_dest: "{{ repositories_path }}/../"

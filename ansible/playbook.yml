@@ -1,0 +1,12 @@
+---
+- name: Set up Claude dev environment on TrueNAS SCALE
+  hosts: truenas
+  gather_facts: true
+
+  roles:
+    - role: dataset       # Ensure ZFS dataset directories exist
+    - role: runtime       # Install Node.js, Claude Code, jq into dataset
+    - role: host_shell    # Install zsh, oh-my-zsh, configure .zshrc for claude user
+    - role: claude_config # Deploy settings.json + statusline.sh, create ~/.claude symlink
+    - role: repos         # Clone master repo + submodules into dataset
+    - role: devcontainers # Render docker-compose.yml, ensure .env exists
