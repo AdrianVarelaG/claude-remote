@@ -14,4 +14,11 @@
     - "{{ home_path }}"
     - "{{ runtime_path }}"
     - "{{ claude_config_path }}"
-    - "{{ repositories_path }}"
+
+- name: Fix ownership of any root-owned files under home
+  ansible.builtin.file:
+    path: "{{ home_path }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    recurse: true
+  become: true

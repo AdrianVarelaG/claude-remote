@@ -68,3 +68,71 @@
     dest: "{{ runtime_path }}/bin/claude"
     state: link
     force: true
+
+- name: Check if tree is already available on the system
+  ansible.builtin.stat:
+    path: /usr/bin/tree
+  register: system_tree
+
+- name: Symlink system tree into runtime bin (if present)
+  ansible.builtin.file:
+    src: /usr/bin/tree
+    dest: "{{ runtime_path }}/bin/tree"
+    state: link
+    force: false
+  when: system_tree.stat.exists
+
+- name: Check if tree is already in runtime bin
+  ansible.builtin.stat:
+    path: "{{ runtime_path }}/bin/tree"
+  register: runtime_tree
+
+- name: Download tree .deb (Debian 12 Bookworm — apt is disabled on TrueNAS)
+  ansible.builtin.get_url:
+    url: "https://ftp.debian.org/debian/pool/main/t/tree/tree_2.1.0-1_amd64.deb"
+    dest: "/tmp/tree.deb"
+    mode: "0644"
+  when: not system_tree.stat.exists and not runtime_tree.stat.exists
+
+- name: Extract tree binary from .deb using Python (dpkg/ar blocked on TrueNAS)
+  ansible.builtin.shell:
+    cmd: |
+      python3 - << 'EOF'
+      import os, subprocess, sys
+
+      deb = '/tmp/tree.deb'
+      extract_dir = '/tmp/tree-extract'
+      os.makedirs(extract_dir, exist_ok=True)
+
+      with open(deb, 'rb') as f:
+          f.read(8)  # skip !<arch>\n magic
+          while True:
+              hdr = f.read(60)
+              if len(hdr) < 60:
+                  sys.exit('data.tar not found in .deb')
+              name = hdr[:16].strip().decode().rstrip('/')
+              size = int(hdr[48:58].strip())
+              data = f.read(size)
+              if size % 2:
+                  f.read(1)  # ar alignment padding
+              if name.startswith('data.tar'):
+                  tmp = f'/tmp/{name}'
+                  with open(tmp, 'wb') as out:
+                      out.write(data)
+                  subprocess.run(
+                      ['tar', '-xf', tmp, '-C', extract_dir],
+                      check=True
+                  )
+                  break
+      EOF
+    creates: /tmp/tree-extract/usr/bin/tree
+  when: not system_tree.stat.exists and not runtime_tree.stat.exists
+
+- name: Copy tree binary into runtime bin
+  ansible.builtin.copy:
+    src: /tmp/tree-extract/usr/bin/tree
+    dest: "{{ runtime_path }}/bin/tree"
+    mode: "0755"
+    remote_src: true
+    force: false
+  when: not system_tree.stat.exists and not runtime_tree.stat.exists

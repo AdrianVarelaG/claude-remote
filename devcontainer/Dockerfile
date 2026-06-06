@@ -8,7 +8,9 @@ RUN if [ "$USER_UID" != "1000" ]; then \
         groupmod -g ${USER_GID} coder && \
         usermod -u ${USER_UID} -g ${USER_GID} coder && \
         chown -R ${USER_UID}:${USER_GID} /home/coder; \
-    fi
+    fi && \
+    mkdir -p /home/coder/.config && \
+    chown ${USER_UID}:${USER_GID} /home/coder/.config
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl ca-certificates git tmux jq \
