@@ -1,0 +1,9 @@
+[submodule "repositories/NeuralTax"]
+	path = repositories/NeuralTax
+	url = git@github.com:IntegraFiscal/NeuralTax.git
+[submodule "repositories/xml-to-pdf"]
+	path = repositories/xml-to-pdf
+	url = git@github.com:IntegraFiscal/xml-to-pdf.git
+[submodule "repositories/NeuralTax-ui"]
+	path = repositories/NeuralTax-ui
+	url = git@github.com:IntegraFiscal/NeuralTax-ui.git

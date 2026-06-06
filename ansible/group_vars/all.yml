@@ -17,10 +17,12 @@ host_docker_internal_ip: "172.16.0.1"
 # Project submodules — each becomes a devcontainer-<name> service and a git submodule
 # TODO: Add your real projects here
 projects:
-  - name: xml-pdf
+  - name: NeuralTax
     port: 8081
-  # - name: my-other-project
-  #   port: 8082
+  - name: xml-to-pdf
+    port: 8082
+  - name: NeuralTax-ui
+    port: 8083
 
 # Workspace password for code-server (set in .env on the host)
 workspace_password_env: WORKSPACE_PASSWORD
