@@ -14,10 +14,23 @@ ansible/
   inventory.ini            # TrueNAS host IP (fill before first run)
   playbook.yml             # Top-level playbook; runs roles in order
   roles/                   # dataset, runtime, host_shell, claude_config, repos, devcontainers
-  templates/
-    docker-compose.yml.j2  # Jinja2 template — rendered to docker-compose.yml by Ansible
 devcontainer/              # Dockerfile for the browser IDE (code-server) image
 repositories/              # Git submodules — one per project
+```
+
+## TrueNAS Host Layout (after playbook runs)
+
+Everything lives inside the `claude` user's home (`~` = `/mnt/applications/claude-remote/claude`):
+
+```
+~/                       # claude user home — owned by claude:claude
+  runtime/               # Node.js, Claude Code binary, jq
+  claude-config/         # Claude Code settings (settings.json, statusline.sh)
+  repositories/          # Git submodules — one per project
+  repo/                  # This config repo (claude-remote) cloned on the host
+  .claude -> claude-config/  # Symlink so Claude Code finds its config
+  .ssh/                  # SSH keys (id_ed25519 used by dev containers for git)
+  .oh-my-zsh/  .zshrc    # Shell config deployed by host_shell role
 ```
 
 ## Key Commands
@@ -38,14 +51,16 @@ git submodule add <repo-url> repositories/<name>
 
 ## What NOT to Edit Directly
 
-- **`docker-compose.yml`** — rendered by Ansible from `ansible/templates/docker-compose.yml.j2`; local edits will be overwritten on the next playbook run
-- **`/mnt/applications/claude-remote/claude-config/settings.json`** on TrueNAS — deployed by the `claude_config` role; edit `ansible/roles/claude_config/files/settings.json` instead
+- **`~/repo/docker-compose.yml`** on TrueNAS — rendered by Ansible from `ansible/roles/devcontainers/templates/docker-compose.yml.j2`; local edits will be overwritten on the next playbook run
+- **`~/claude-config/settings.json`** on TrueNAS — deployed by the `claude_config` role; edit `ansible/roles/claude_config/files/settings.json` instead (or the template if it uses variables)
 
 ## Dev Container Profiles
 
-The rendered `docker-compose.yml` uses Compose profiles. On TrueNAS:
+The rendered `docker-compose.yml` lives in `~/repo/` on TrueNAS and uses Compose profiles:
 
 ```bash
+cd ~/repo
+
 # Start ALL repositories in a single container (profile: all)
 docker compose --profile all up -d
 

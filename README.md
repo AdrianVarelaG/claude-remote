@@ -11,10 +11,11 @@ Mac (you run Ansible here)
   └─ ansible-playbook → SSH → TrueNAS SCALE host
                                 │
                                 ├─ ZFS dataset: /mnt/applications/claude-remote/
-                                │    ├─ claude/          ← claude user home, SSH keys
-                                │    ├─ claude-config/   ← ~/.claude (credentials, settings)
-                                │    ├─ runtime/         ← Node.js, Claude Code binary, jq
-                                │    └─ repositories/    ← git submodules (one per project)
+                                │    └─ claude/               ← claude user home (~)
+                                │         ├─ runtime/         ← Node.js, Claude Code binary, jq
+                                │         ├─ claude-config/   ← ~/.claude (credentials, settings)
+                                │         ├─ repositories/    ← git submodules (one per project)
+                                │         └─ repo/            ← this config repo (claude-remote)
                                 │
                                 ├─ Host: claude user runs `claude` in tmux (one session/project)
                                 │
@@ -112,7 +113,7 @@ ssh claude@<TRUENAS_IP>
 claude   # follow the browser OAuth prompt; credentials are saved to the dataset
 ```
 
-Credentials are stored in `/mnt/applications/claude-remote/claude-config/` and persist across host reboots and playbook re-runs.
+Credentials are stored in `~/claude-config/` (symlinked as `~/.claude`) and persist across host reboots and playbook re-runs.
 
 ---
 
@@ -127,7 +128,7 @@ ssh claude@<TRUENAS_IP>
 
 # Start a session for a project
 tmux new -s xml-pdf
-cd /mnt/applications/claude-remote/repositories/xml-pdf
+cd ~/repositories/xml-pdf
 claude
 # Ctrl+B, D  ← detach
 
@@ -137,11 +138,11 @@ tmux attach -t xml-pdf
 
 ### Starting Dev Containers (browser IDE)
 
-Dev containers are managed by the rendered `docker-compose.yml` in the dataset root:
+Dev containers are managed by the rendered `docker-compose.yml` inside the config repo:
 
 ```bash
 ssh claude@<TRUENAS_IP>
-cd /mnt/applications/claude-remote
+cd ~/repo
 
 # Start the aggregate container (all repos, port 8080)
 docker compose --profile all up -d
@@ -160,7 +161,7 @@ Open the browser IDE at `http://<TRUENAS_IP>:<PORT>` and authenticate with the p
 Each project repository contains its own `docker-compose.yml` for its application services. Run it from inside the repository:
 
 ```bash
-cd /mnt/applications/claude-remote/repositories/xml-pdf
+cd ~/repositories/xml-pdf
 docker compose up -d
 ```
 
