@@ -1,0 +1,20 @@
+---
+- name: Deploy Claude settings.json from template
+  ansible.builtin.template:
+    src: settings.json.j2
+    dest: "{{ claude_config_path }}/settings.json"
+    mode: "0644"
+    backup: true
+
+- name: Copy statusline.sh into claude config dir
+  ansible.builtin.copy:
+    src: statusline.sh
+    dest: "{{ claude_config_path }}/statusline.sh"
+    mode: "0755"
+
+- name: Create ~/.claude symlink → dataset claude-config dir
+  ansible.builtin.file:
+    src: "{{ claude_config_path }}"
+    dest: "~/.claude"
+    state: link
+    force: true

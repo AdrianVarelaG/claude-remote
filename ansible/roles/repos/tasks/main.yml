@@ -1,0 +1,16 @@
+---
+- name: Clone master repo into dataset
+  ansible.builtin.git:
+    repo: "{{ master_repo_url }}"
+    dest: "{{ master_repo_dest }}"
+    recursive: true
+    update: true
+    accept_hostkey: true
+  register: repo_clone
+
+- name: Initialize and update git submodules
+  ansible.builtin.command:
+    cmd: git submodule update --init --recursive
+    chdir: "{{ master_repo_dest }}"
+  when: repo_clone.changed
+  changed_when: true

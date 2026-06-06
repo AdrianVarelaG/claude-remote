@@ -1,0 +1,22 @@
+---
+- name: Render docker-compose.yml from template
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ master_repo_dest }}/docker-compose.yml"
+    mode: "0644"
+    backup: true
+
+- name: Ensure .env file exists with WORKSPACE_PASSWORD
+  ansible.builtin.copy:
+    dest: "{{ master_repo_dest }}/.env"
+    content: |
+      # Set your code-server password here
+      WORKSPACE_PASSWORD=changeme
+    mode: "0600"
+    force: false
+
+- name: Add .env to .gitignore if not already present
+  ansible.builtin.lineinfile:
+    path: "{{ master_repo_dest }}/.gitignore"
+    line: ".env"
+    state: present
