@@ -10,6 +10,12 @@
     state: absent
   when: not git_dir.stat.exists
 
+- name: Mark repo as safe directory for claude user (avoids dubious ownership error)
+  community.general.git_config:
+    name: safe.directory
+    value: "{{ master_repo_dest }}"
+    scope: global
+
 - name: Clone master repo into dataset
   ansible.builtin.git:
     repo: "{{ master_repo_url }}"

@@ -31,6 +31,8 @@ Everything lives inside the `claude` user's home (`~` = `/mnt/applications/claud
   .claude -> claude-config/  # Symlink so Claude Code finds its config
   .ssh/                  # SSH keys (id_ed25519 used by dev containers for git)
   .oh-my-zsh/  .zshrc    # Shell config deployed by host_shell role
+  docker-compose.yml     # Rendered by Ansible — do not edit directly
+  .env                   # WORKSPACE_PASSWORD — not tracked by git
 ```
 
 ## Key Commands
@@ -51,15 +53,15 @@ git submodule add <repo-url> repositories/<name>
 
 ## What NOT to Edit Directly
 
-- **`~/repo/docker-compose.yml`** on TrueNAS — rendered by Ansible from `ansible/roles/devcontainers/templates/docker-compose.yml.j2`; local edits will be overwritten on the next playbook run
+- **`~/docker-compose.yml`** on TrueNAS — rendered by Ansible from `ansible/roles/devcontainers/templates/docker-compose.yml.j2`; local edits will be overwritten on the next playbook run
 - **`~/claude-config/settings.json`** on TrueNAS — deployed by the `claude_config` role; edit `ansible/roles/claude_config/files/settings.json` instead (or the template if it uses variables)
 
 ## Dev Container Profiles
 
-The rendered `docker-compose.yml` lives in `~/repo/` on TrueNAS and uses Compose profiles:
+The rendered `docker-compose.yml` lives in `~/` (home, outside the git repo) and uses Compose profiles:
 
 ```bash
-cd ~/repo
+cd ~
 
 # Start ALL repositories in a single container (profile: all)
 docker compose --profile all up -d

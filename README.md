@@ -138,11 +138,11 @@ tmux attach -t xml-pdf
 
 ### Starting Dev Containers (browser IDE)
 
-Dev containers are managed by the rendered `docker-compose.yml` inside the config repo:
+Dev containers are managed by the rendered `docker-compose.yml` in the home directory:
 
 ```bash
 ssh claude@<TRUENAS_IP>
-cd ~/repo
+cd ~
 
 # Start the aggregate container (all repos, port 8080)
 docker compose --profile all up -d
