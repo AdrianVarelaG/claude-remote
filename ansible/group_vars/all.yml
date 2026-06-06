@@ -33,4 +33,4 @@ container_gid: 950
 # Git repo URL for this master repo (used by repos role to clone on the host)
 # TODO: Replace with your actual Git remote URL
 master_repo_url: "git@github.com:YOUR_USER/claude-remote.git"
-master_repo_dest: "{{ repositories_path }}/../"
+master_repo_dest: "{{ pool_path }}"
