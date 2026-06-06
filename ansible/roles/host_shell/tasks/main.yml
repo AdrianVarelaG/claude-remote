@@ -1,4 +1,21 @@
 ---
+- name: Generate SSH keypair for claude user (used by dev containers for git)
+  community.crypto.openssh_keypair:
+    path: "{{ home_path }}/.ssh/id_ed25519"
+    type: ed25519
+    comment: "claude@truenas"
+    mode: "0600"
+    force: false
+
+- name: Print claude user public key (add this to GitHub/GitLab)
+  ansible.builtin.command: cat "{{ home_path }}/.ssh/id_ed25519.pub"
+  register: pubkey
+  changed_when: false
+
+- name: Show public key
+  ansible.builtin.debug:
+    msg: "Add this key to GitHub/GitLab SSH keys: {{ pubkey.stdout }}"
+
 - name: Check if oh-my-zsh is installed
   ansible.builtin.stat:
     path: "{{ home_path }}/.oh-my-zsh"

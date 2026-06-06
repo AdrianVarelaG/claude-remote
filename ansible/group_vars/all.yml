@@ -34,5 +34,5 @@ claude_uid: 3001
 
 # Git repo URL for this master repo (used by repos role to clone on the host)
 # TODO: Replace with your actual Git remote URL before running the repos role
-master_repo_url: "git@github.com:YOUR_USER/claude-remote.git"
+master_repo_url: "git@github.com:AdrianVarelaG/claude-remote.git"
 master_repo_dest: "{{ pool_path }}"

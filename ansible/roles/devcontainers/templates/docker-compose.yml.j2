@@ -16,8 +16,7 @@ services:
       - "{{ claude_config_path }}:/home/coder/.claude"
       - "{{ repositories_path }}:/repositories"
       - devcontainer-all-config:/home/coder/.config
-      - "{{ master_repo_dest }}/.ssh-contenedor:/home/coder/.ssh"
-      - "{{ home_path }}/.ssh/id_ed25519:/home/coder/.ssh/id_ed25519:ro"
+      - "{{ home_path }}/.ssh:/home/coder/.ssh:ro"
     environment:
       - PASSWORD=${WORKSPACE_PASSWORD}
     ports:
@@ -37,8 +36,7 @@ services:
       - "{{ claude_config_path }}:/home/coder/.claude"
       - "{{ repositories_path }}/{{ project.name }}:/workspace"
       - devcontainer-{{ project.name }}-config:/home/coder/.config
-      - "{{ master_repo_dest }}/.ssh-contenedor:/home/coder/.ssh"
-      - "{{ home_path }}/.ssh/id_ed25519:/home/coder/.ssh/id_ed25519:ro"
+      - "{{ home_path }}/.ssh:/home/coder/.ssh:ro"
     environment:
       - PASSWORD=${WORKSPACE_PASSWORD}
     ports:

@@ -16,8 +16,7 @@ services:
       - "/mnt/applications/claude-remote/claude-config:/home/coder/.claude"
       - "/mnt/applications/claude-remote/repositories:/repositories"
       - devcontainer-all-config:/home/coder/.config
-      - "/mnt/applications/claude-remote/.ssh-contenedor:/home/coder/.ssh"
-      - "/mnt/applications/claude-remote/claude/.ssh/id_ed25519:/home/coder/.ssh/id_ed25519:ro"
+      - "/mnt/applications/claude-remote/claude/.ssh:/home/coder/.ssh:ro"
     environment:
       - PASSWORD=${WORKSPACE_PASSWORD}
     ports:
@@ -36,8 +35,7 @@ services:
       - "/mnt/applications/claude-remote/claude-config:/home/coder/.claude"
       - "/mnt/applications/claude-remote/repositories/xml-pdf:/workspace"
       - devcontainer-xml-pdf-config:/home/coder/.config
-      - "/mnt/applications/claude-remote/.ssh-contenedor:/home/coder/.ssh"
-      - "/mnt/applications/claude-remote/claude/.ssh/id_ed25519:/home/coder/.ssh/id_ed25519:ro"
+      - "/mnt/applications/claude-remote/claude/.ssh:/home/coder/.ssh:ro"
     environment:
       - PASSWORD=${WORKSPACE_PASSWORD}
     ports:

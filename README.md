@@ -75,12 +75,7 @@ These steps are done once in the TrueNAS web UI before running the playbook.
 ## First-Time Setup
 
 ```bash
-# 1. Clone this repo on your Mac
-git clone git@github.com:YOUR_USER/claude-remote.git
-cd claude-remote
-git submodule update --init --recursive
-
-# 2. Set your TrueNAS IP in the inventory
+# 1. Set your TrueNAS IP in the inventory
 #    Edit ansible/inventory.ini — replace TRUENAS_IP with the real address
 vim ansible/inventory.ini
 
