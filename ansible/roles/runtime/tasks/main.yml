@@ -11,6 +11,12 @@
     state: directory
     mode: "0755"
 
+- name: Create runtime bin dir
+  ansible.builtin.file:
+    path: "{{ runtime_path }}/bin"
+    state: directory
+    mode: "0755"
+
 - name: Download Node.js tarball
   ansible.builtin.get_url:
     url: "https://nodejs.org/dist/v{{ node_version }}/node-v{{ node_version }}-{{ node_arch }}.tar.xz"
@@ -42,11 +48,17 @@
     - npm
     - npx
 
+- name: Check if claude is installed
+  ansible.builtin.stat:
+    path: "{{ runtime_path }}/node/bin/claude"
+  register: claude_stat
+
 - name: Install Claude Code globally
   ansible.builtin.command:
     cmd: "{{ runtime_path }}/node/bin/npm install -g @anthropic-ai/claude-code"
   environment:
     npm_config_prefix: "{{ runtime_path }}/node"
+  when: not claude_stat.stat.exists
   changed_when: true
 
 - name: Create claude symlink in bin
