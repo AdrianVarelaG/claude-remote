@@ -1,155 +1,209 @@
-# Claude Remote Dev Environment
+# claude-remote
 
-Two isolated development containers (Python and Next.js) with Claude Code accessible remotely from any browser or mobile device via Tailscale.
+Ansible-managed dev environment on TrueNAS SCALE. A single playbook, run from a Mac, provisions a ZFS dataset, installs Claude Code on the TrueNAS host, and renders Docker Compose dev containers (browser-accessible VS Code via code-server) for each project. Everything is idempotent — re-running the playbook brings the host back to the desired state.
 
-## Structure
+---
+
+## Architecture
 
 ```
-claude-remote/
-├── docker-compose.yml       # Starts both containers
-├── python/
-│   ├── Dockerfile           # Python 3 + Pyright LSP + Black + Claude Code
-│   └── settings.json        # Claude permissions + pyright-lsp plugin
-└── nextjs/
-    ├── Dockerfile           # Node 20 + TypeScript LSP + Claude Code
-    └── settings.json        # Claude permissions + typescript-lsp plugin
+Mac (you run Ansible here)
+  └─ ansible-playbook → SSH → TrueNAS SCALE host
+                                │
+                                ├─ ZFS dataset: /mnt/applications/claude-remote/
+                                │    ├─ claude/          ← claude user home, SSH keys
+                                │    ├─ claude-config/   ← ~/.claude (credentials, settings)
+                                │    ├─ runtime/         ← Node.js, Claude Code binary, jq
+                                │    └─ repositories/    ← git submodules (one per project)
+                                │
+                                ├─ Host: claude user runs `claude` in tmux (one session/project)
+                                │
+                                └─ Docker dev containers (code-server browser IDE)
+                                     devcontainer-all        → port 8080 (all repos)
+                                     devcontainer-<project>  → port 808x (one repo each)
+                                          └─ project's own docker-compose (app stack)
 ```
+
+---
 
 ## Prerequisites
 
-- Docker and Docker Compose installed on your server
-- Tailscale installed and connected on both your server and personal devices
-- A claude.ai subscription (Pro, Max, Team, or Enterprise)
-- Claude Code v2.1.51+
+- TrueNAS SCALE 24.10+ (Electric Eel) with native Docker enabled
+- Ansible 2.15+ installed on your Mac (`brew install ansible`)
+- SSH key pair — public key will be pasted into TrueNAS UI during user creation
+- The `claude` user created manually in the TrueNAS UI (see next section)
 
-## First-time Setup
+---
 
-### 1. Authenticate Claude Code on the server (outside Docker, one time only)
+## Creating the `claude` User on TrueNAS
+
+These steps are done once in the TrueNAS web UI before running the playbook.
+
+### 1. Create the ZFS Dataset
+
+- Go to **Storage → Create Pool** (or use an existing pool)
+- Add a dataset: path `applications/claude-remote` at the pool root
+- Leave default settings (inherits compression, etc.)
+
+### 2. Create the User
+
+- Go to **Credentials → Local Users → Add**
+- Fill in:
+  - **Username:** `claude`
+  - **Full Name:** `Claude`
+  - **Home Directory:** `/mnt/applications/claude-remote/claude`
+  - Check **Create Home Directory**
+  - **Shell:** `zsh`
+  - **Disable Password:** yes (SSH key only)
+  - **Authorized Keys:** paste your SSH public key (`~/.ssh/id_ed25519.pub` or equivalent)
+- Under **Auxiliary Groups**, add the group that has access to the Docker socket (typically `docker`)
+- Save
+
+### 3. Grant Passwordless Sudo
+
+- Go to **System → Shell** (or SSH in as admin) and run:
+  ```bash
+  echo 'claude ALL=(ALL) NOPASSWD: ALL' > /usr/local/etc/sudoers.d/claude
+  ```
+
+### 4. Enable SSH Service
+
+- Go to **System → Services → SSH** and ensure it is running and set to start automatically
+
+---
+
+## First-Time Setup
 
 ```bash
-npm install -g @anthropic-ai/claude-code
-claude login
-```
-
-This opens an OAuth flow in your browser. Your credentials are saved to `~/.claude/` and will be shared with the containers via a volume mount.
-
-### 2. Clone this repository on your server
-
-```bash
-git clone <this-repo> claude-remote
+# 1. Clone this repo on your Mac
+git clone git@github.com:YOUR_USER/claude-remote.git
 cd claude-remote
+git submodule update --init --recursive
+
+# 2. Set your TrueNAS IP in the inventory
+#    Edit ansible/inventory.ini — replace TRUENAS_IP with the real address
+vim ansible/inventory.ini
+
+# 3. Set your project list and pool path
+#    Edit ansible/group_vars/all.yml:
+#      - pool_path (default /mnt/applications/claude-remote is usually correct)
+#      - master_repo_url (your actual Git remote for this repo)
+#      - projects list (name + port for each submodule)
+vim ansible/group_vars/all.yml
+
+# 4. Run the playbook
+ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
 ```
 
-### 3. Set your passwords
+The playbook runs these roles in order:
 
-Edit `docker-compose.yml` and replace `tu-password-seguro` with your chosen passwords for both services.
+| Role | What it does |
+|---|---|
+| `dataset` | Creates subdirectory layout under the ZFS dataset |
+| `runtime` | Installs Node.js, Claude Code, and jq into `runtime/` |
+| `host_shell` | Installs zsh, oh-my-zsh, configures `.zshrc` for the `claude` user |
+| `claude_config` | Deploys `settings.json` and `statusline.sh`, creates `~/.claude` symlink |
+| `repos` | Clones this master repo and all submodules into `repositories/` on the host |
+| `devcontainers` | Renders `docker-compose.yml` from the Jinja2 template, creates `.env` if missing |
 
-### 4. Set up your project directories
+---
+
+## First Claude Login
+
+After the playbook completes, SSH into TrueNAS as the `claude` user and run `claude` once to complete OAuth:
 
 ```bash
-mkdir -p ~/proyectos/python
-mkdir -p ~/proyectos/nextjs
+ssh claude@<TRUENAS_IP>
+claude   # follow the browser OAuth prompt; credentials are saved to the dataset
 ```
 
-Clone your repos into each:
+Credentials are stored in `/mnt/applications/claude-remote/claude-config/` and persist across host reboots and playbook re-runs.
+
+---
+
+## Daily Usage
+
+### Running Claude on the Host
+
+Each project gets its own tmux session so Claude can keep working after you disconnect:
 
 ```bash
-git clone git@github.com:your-org/python-repo.git ~/proyectos/python
-git clone git@github.com:your-org/nextjs-repo.git ~/proyectos/nextjs
-```
+ssh claude@<TRUENAS_IP>
 
-### 5. Load your SSH key
-
-```bash
-eval $(ssh-agent -s)
-ssh-add ~/.ssh/your-private-key
-```
-
-### 6. Start the containers
-
-```bash
-docker compose up -d --build
-```
-
-## Accessing the Environment
-
-### From browser (code-server)
-
-| Container | URL |
-|-----------|-----|
-| Python    | `http://<tailscale-ip>:8080` |
-| Next.js   | `http://<tailscale-ip>:8081` |
-
-Enter the password you set in `docker-compose.yml`.
-
-### From mobile (assign tasks to Claude)
-
-1. Open `claude.ai` on your phone
-2. Go to the **Code** tab
-3. You will see your active remote sessions listed
-4. Tap a session to assign tasks, check progress, or give new instructions
-
-### Starting Claude remote control
-
-Open a terminal inside code-server and run:
-
-```bash
-claude remote-control --name "Python Workspace"
-# or
-claude remote-control --name "Next.js Workspace"
-```
-
-Your session will appear in `claude.ai/code` within seconds.
-
-## LSP Code Intelligence
-
-Each container has its language server installed and configured for Claude:
-
-| Container | LSP Plugin | Provides |
-|-----------|------------|----------|
-| Python    | `pyright-lsp@claude-plugins-official` | Type checking, go-to-definition, find-references |
-| Next.js   | `typescript-lsp@claude-plugins-official` | Type checking, go-to-definition, find-references |
-
-Claude uses these automatically to navigate and understand your code. The first time you start Claude Code in a container it may prompt you to confirm the plugin installation.
-
-## Managing Containers
-
-```bash
-# Start both
-docker compose up -d
-
-# Stop both
-docker compose down
-
-# Start only Python
-docker compose up -d workspace-python
-
-# Start only Next.js
-docker compose up -d workspace-nextjs
-
-# Rebuild after Dockerfile changes
-docker compose up -d --build
-
-# View logs
-docker compose logs -f workspace-python
-docker compose logs -f workspace-nextjs
-```
-
-## Keeping Claude Running When You Disconnect
-
-Use `tmux` inside code-server's terminal so Claude keeps working after you close the browser:
-
-```bash
-tmux new -s claude
-claude remote-control --name "Python Workspace"
-# Ctrl+B, D to detach — Claude keeps running
+# Start a session for a project
+tmux new -s xml-pdf
+cd /mnt/applications/claude-remote/repositories/xml-pdf
+claude
+# Ctrl+B, D  ← detach
 
 # Reattach later
-tmux attach -t claude
+tmux attach -t xml-pdf
 ```
 
-## Notes
+### Starting Dev Containers (browser IDE)
 
-- SSH agent forwarding is configured automatically via `SSH_AUTH_SOCK` — any key loaded with `ssh-add` on the host is available inside both containers for git operations.
-- The `~/.claude` directory is shared between both containers and the host, so skills and settings you create persist across rebuilds.
-- Project-level Claude settings live in `python/settings.json` and `nextjs/settings.json` and are mounted at `/workspace/.claude/settings.json` inside each container.
+Dev containers are managed by the rendered `docker-compose.yml` in the dataset root:
+
+```bash
+ssh claude@<TRUENAS_IP>
+cd /mnt/applications/claude-remote
+
+# Start the aggregate container (all repos, port 8080)
+docker compose --profile all up -d
+
+# Start only one project's container (e.g., xml-pdf on port 8081)
+docker compose --profile xml-pdf up -d
+
+# Stop everything
+docker compose down
+```
+
+Open the browser IDE at `http://<TRUENAS_IP>:<PORT>` and authenticate with the password stored in `.env`.
+
+### Starting a Project's App Stack
+
+Each project repository contains its own `docker-compose.yml` for its application services. Run it from inside the repository:
+
+```bash
+cd /mnt/applications/claude-remote/repositories/xml-pdf
+docker compose up -d
+```
+
+---
+
+## Adding a Project
+
+1. Add the project as a git submodule (on your Mac):
+   ```bash
+   git submodule add git@github.com:YOUR_USER/<project>.git repositories/<project>
+   git commit -m "add <project> submodule"
+   git push
+   ```
+
+2. Add the project to `ansible/group_vars/all.yml` under `projects:`:
+   ```yaml
+   projects:
+     - name: xml-pdf
+       port: 8081
+     - name: <project>      # ← add this
+       port: 8082
+   ```
+
+3. Re-run the playbook:
+   ```bash
+   ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
+   ```
+
+The playbook will clone the new submodule on the host and re-render `docker-compose.yml` with the new container.
+
+---
+
+## Recovery
+
+If anything breaks on the host, just re-run the playbook — all roles are idempotent:
+
+```bash
+ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
+```
+
+Data in the ZFS dataset (credentials, repositories, config) is never deleted by the playbook.

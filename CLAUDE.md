@@ -1,64 +1,62 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code sessions working in this repository.
 
 ## What This Repo Is
 
-A Docker Compose setup that runs multiple isolated code-server (browser-accessible VS Code) containers, each with Claude Code pre-installed. The host's `~/.claude` directory is shared into every container so credentials and settings persist across rebuilds.
+Master configuration for all dev projects on TrueNAS SCALE — an Ansible playbook run from a Mac provisions and maintains everything idempotently on the host.
 
-## Container Services
+## Repo Layout
 
-| Service | Port | Workspace mounted from host | Purpose |
-|---|---|---|---|
-| `workspace-base` | 8080 | `./` (this repo) | General base container |
-| `workspace-python` | 8081 | `../proyectos/python` | Python dev (pyright, black) |
-| `workspace-nextjs` | — | `../proyectos/nextjs` | Next.js dev (TypeScript LSP, ESLint, Prettier, Tailwind) |
-| `workspace-node` | 8082 | `../proyectos/xml-pdf` | Node/Puppeteer dev |
+```
+ansible/
+  group_vars/all.yml       # All tunables: pool path, projects list, ports, UIDs
+  inventory.ini            # TrueNAS host IP (fill before first run)
+  playbook.yml             # Top-level playbook; runs roles in order
+  roles/                   # dataset, runtime, host_shell, claude_config, repos, devcontainers
+  templates/
+    docker-compose.yml.j2  # Jinja2 template — rendered to docker-compose.yml by Ansible
+devcontainer/              # Dockerfile for the browser IDE (code-server) image
+repositories/              # Git submodules — one per project
+```
 
 ## Key Commands
 
 ```bash
-# Start all containers
-docker compose up -d
+# Run the full playbook from the Mac (after filling inventory.ini)
+ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
 
-# Rebuild after Dockerfile changes
-docker compose up -d --build
+# Run only one role (e.g., after editing the template)
+ansible-playbook -i ansible/inventory.ini ansible/playbook.yml --tags devcontainers
 
-# Start a single service
-docker compose up -d workspace-python
+# Add a new project
+git submodule add <repo-url> repositories/<name>
+# Then add an entry to ansible/group_vars/all.yml under `projects:`
+# Then re-run the playbook
+```
 
-# View logs
-docker compose logs -f workspace-python
+## What NOT to Edit Directly
+
+- **`docker-compose.yml`** — rendered by Ansible from `ansible/templates/docker-compose.yml.j2`; local edits will be overwritten on the next playbook run
+- **`/mnt/applications/claude-remote/claude-config/settings.json`** on TrueNAS — deployed by the `claude_config` role; edit `ansible/roles/claude_config/files/settings.json` instead
+
+## Dev Container Profiles
+
+The rendered `docker-compose.yml` uses Compose profiles. On TrueNAS:
+
+```bash
+# Start ALL repositories in a single container (profile: all)
+docker compose --profile all up -d
+
+# Start only a specific project (profile matches project name)
+docker compose --profile xml-pdf up -d
 
 # Stop everything
 docker compose down
 ```
 
-## Configuration Architecture
+## Adding a Project
 
-- **`docker-compose.yml`** — defines services, volume mounts, port mappings, and the `WORKSPACE_PASSWORD` env var (read from `.env`)
-- **`<service>/Dockerfile`** — installs language tooling + Claude Code globally; UID/GID are parameterized to `950:950` to match the TrueNAS host user
-- **`<service>/settings.json`** — mounted at `/workspace/.claude/settings.json` inside each container; controls Claude's allowed/denied Bash commands and enabled LSP plugins
-- **`.ssh-contenedor/`** — SSH known_hosts and a generated keypair for the container identity; the host's private key is additionally bind-mounted read-only at `/home/coder/.ssh/id_ed25519`
-
-## Claude Permissions Per Container
-
-- **Python**: allows `python3`, `pip`, `pytest`, `uvicorn`, `black`, `git`, read commands; denies `rm -rf`, `curl`, `wget`
-- **Next.js / Node**: allows `npm`, `npx`, `node`, `next`, `eslint`, `prettier`, `tsc`, `git`, read commands; denies `rm -rf`, `curl`, `wget`
-
-## Keeping Claude Running After Disconnect
-
-Use `tmux` inside any container's code-server terminal:
-
-```bash
-tmux new -s claude
-claude  # or claude remote-control --name "..."
-# Ctrl+B, D to detach
-tmux attach -t claude
-```
-
-## Adding a New Container
-
-1. Create `<name>/Dockerfile` following the existing pattern (base image `codercom/code-server:latest`, install tools, install `@anthropic-ai/claude-code` globally)
-2. Create `<name>/settings.json` with appropriate permission allowlist
-3. Add the service to `docker-compose.yml`, mounting `../.claude`, the project directory, a named config volume, `<name>/settings.json`, and `.ssh-contenedor`
+1. `git submodule add <repo-url> repositories/<name>`
+2. Add an entry under `projects:` in `ansible/group_vars/all.yml` (name + port)
+3. Re-run the playbook — it renders a new docker-compose.yml and clones the submodule on the host
