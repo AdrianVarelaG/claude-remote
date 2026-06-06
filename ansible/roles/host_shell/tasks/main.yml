@@ -1,0 +1,45 @@
+---
+- name: Check if oh-my-zsh is installed
+  ansible.builtin.stat:
+    path: "{{ home_path }}/.oh-my-zsh"
+  register: omz_stat
+
+- name: Install oh-my-zsh
+  ansible.builtin.shell:
+    cmd: >
+      sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+      "" --unattended
+  environment:
+    HOME: "{{ home_path }}"
+    ZSH: "{{ home_path }}/.oh-my-zsh"
+  when: not omz_stat.stat.exists
+
+- name: Clone zsh-autosuggestions plugin
+  ansible.builtin.git:
+    repo: https://github.com/zsh-users/zsh-autosuggestions
+    dest: "{{ home_path }}/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
+    depth: 1
+
+- name: Clone zsh-syntax-highlighting plugin
+  ansible.builtin.git:
+    repo: https://github.com/zsh-users/zsh-syntax-highlighting
+    dest: "{{ home_path }}/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
+    depth: 1
+
+- name: Deploy .zshrc from template
+  ansible.builtin.template:
+    src: zshrc.j2
+    dest: "{{ home_path }}/.zshrc"
+    mode: "0644"
+    backup: true
+
+- name: Add zsh exec to .bashrc (fallback for bash login shells)
+  ansible.builtin.blockinfile:
+    path: "{{ home_path }}/.bashrc"
+    create: true
+    marker: "# {mark} ANSIBLE MANAGED — zsh launcher"
+    block: |
+      # Launch zsh for interactive sessions if not already in zsh
+      if [ -n "$PS1" ] && [ -z "$ZSH_VERSION" ] && command -v zsh >/dev/null 2>&1; then
+        exec zsh
+      fi

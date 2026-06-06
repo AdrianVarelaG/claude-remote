@@ -1,0 +1,17 @@
+# Managed by Ansible — claude-remote host shell config
+export ZSH="{{ home_path }}/.oh-my-zsh"
+
+ZSH_THEME="robbyrussell"
+
+plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
+
+source $ZSH/oh-my-zsh.sh
+
+# Runtime PATH (node, npm, claude, jq)
+export PATH="{{ runtime_path }}/node/bin:{{ runtime_path }}/bin:$PATH"
+export NODE_PATH="{{ runtime_path }}/node/lib/node_modules"
+
+# ZSH history on the dataset (survives OS updates)
+export HISTFILE="{{ home_path }}/.zsh_history"
+export HISTSIZE=10000
+export SAVEHIST=10000

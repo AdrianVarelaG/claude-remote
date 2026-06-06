@@ -1,0 +1,7 @@
+---
+# Symlinks created in runtime_path/bin for quick PATH access
+runtime_bins:
+  - node
+  - npm
+  - npx
+  - claude

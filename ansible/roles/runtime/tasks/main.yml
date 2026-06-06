@@ -1,0 +1,57 @@
+---
+- name: Set runtime version facts
+  ansible.builtin.set_fact:
+    node_version: "20.19.2"
+    node_arch: "linux-x64"
+    jq_version: "1.7.1"
+
+- name: Create Node.js install dir
+  ansible.builtin.file:
+    path: "{{ runtime_path }}/node"
+    state: directory
+    mode: "0755"
+
+- name: Download Node.js tarball
+  ansible.builtin.get_url:
+    url: "https://nodejs.org/dist/v{{ node_version }}/node-v{{ node_version }}-{{ node_arch }}.tar.xz"
+    dest: "/tmp/node-v{{ node_version }}-{{ node_arch }}.tar.xz"
+    mode: "0644"
+
+- name: Extract Node.js
+  ansible.builtin.unarchive:
+    src: "/tmp/node-v{{ node_version }}-{{ node_arch }}.tar.xz"
+    dest: "{{ runtime_path }}/node"
+    remote_src: true
+    extra_opts: ["--strip-components=1"]
+    creates: "{{ runtime_path }}/node/bin/node"
+
+- name: Download static jq binary
+  ansible.builtin.get_url:
+    url: "https://github.com/jqlang/jq/releases/download/jq-{{ jq_version }}/jq-linux-amd64"
+    dest: "{{ runtime_path }}/bin/jq"
+    mode: "0755"
+
+- name: Create bin symlinks for node/npm/npx
+  ansible.builtin.file:
+    src: "{{ runtime_path }}/node/bin/{{ item }}"
+    dest: "{{ runtime_path }}/bin/{{ item }}"
+    state: link
+    force: true
+  loop:
+    - node
+    - npm
+    - npx
+
+- name: Install Claude Code globally
+  ansible.builtin.command:
+    cmd: "{{ runtime_path }}/node/bin/npm install -g @anthropic-ai/claude-code"
+  environment:
+    npm_config_prefix: "{{ runtime_path }}/node"
+  changed_when: true
+
+- name: Create claude symlink in bin
+  ansible.builtin.file:
+    src: "{{ runtime_path }}/node/bin/claude"
+    dest: "{{ runtime_path }}/bin/claude"
+    state: link
+    force: true
