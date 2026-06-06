@@ -3,10 +3,10 @@
 pool_path: /mnt/applications/claude-remote
 
 # Derived paths (do not edit)
-runtime_path: "{{ pool_path }}/runtime"
 home_path: "{{ pool_path }}/claude"
-claude_config_path: "{{ pool_path }}/claude-config"
-repositories_path: "{{ pool_path }}/repositories"
+runtime_path: "{{ home_path }}/runtime"
+claude_config_path: "{{ home_path }}/claude-config"
+repositories_path: "{{ home_path }}/repositories"
 
 # Dev-container port base (aggregate container gets base_port, projects get base_port+1, +2, ...)
 base_port: 8080
@@ -37,4 +37,4 @@ claude_uid: 3001
 # Git repo URL for this master repo (used by repos role to clone on the host)
 # TODO: Replace with your actual Git remote URL before running the repos role
 master_repo_url: "git@github.com:AdrianVarelaG/claude-remote.git"
-master_repo_dest: "{{ pool_path }}"
+master_repo_dest: "{{ home_path }}/repo"

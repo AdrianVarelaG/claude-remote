@@ -22,13 +22,10 @@
   register: omz_stat
 
 - name: Install oh-my-zsh
-  ansible.builtin.shell:
-    cmd: >
-      sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-      "" --unattended
-  environment:
-    HOME: "{{ home_path }}"
-    ZSH: "{{ home_path }}/.oh-my-zsh"
+  ansible.builtin.git:
+    repo: https://github.com/ohmyzsh/ohmyzsh.git
+    dest: "{{ home_path }}/.oh-my-zsh"
+    depth: 1
   when: not omz_stat.stat.exists
 
 - name: Clone zsh-autosuggestions plugin

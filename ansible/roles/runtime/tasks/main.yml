@@ -57,6 +57,7 @@
   ansible.builtin.command:
     cmd: "{{ runtime_path }}/node/bin/npm install -g @anthropic-ai/claude-code"
   environment:
+    PATH: "{{ runtime_path }}/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
     npm_config_prefix: "{{ runtime_path }}/node"
   when: not claude_stat.stat.exists
   changed_when: true

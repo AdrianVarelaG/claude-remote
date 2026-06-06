@@ -1,4 +1,15 @@
 ---
+- name: Check if master repo dest is a valid git repo
+  ansible.builtin.stat:
+    path: "{{ master_repo_dest }}/.git"
+  register: git_dir
+
+- name: Remove broken clone (dest exists but has no .git — partial clone)
+  ansible.builtin.file:
+    path: "{{ master_repo_dest }}"
+    state: absent
+  when: not git_dir.stat.exists
+
 - name: Clone master repo into dataset
   ansible.builtin.git:
     repo: "{{ master_repo_url }}"
@@ -6,11 +17,14 @@
     recursive: true
     update: true
     accept_hostkey: true
+    key_file: "{{ home_path }}/.ssh/id_ed25519"
   register: repo_clone
 
 - name: Initialize and update git submodules
   ansible.builtin.command:
     cmd: git submodule update --init --recursive
     chdir: "{{ master_repo_dest }}"
+  environment:
+    GIT_SSH_COMMAND: "ssh -i {{ home_path }}/.ssh/id_ed25519 -o StrictHostKeyChecking=accept-new"
   when: repo_clone.changed
   changed_when: true
