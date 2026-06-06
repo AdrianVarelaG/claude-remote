@@ -7,3 +7,4 @@
 
 # Ansible inventory (contains host info)
 ansible/inventory.ini
+docker-compose.yml
