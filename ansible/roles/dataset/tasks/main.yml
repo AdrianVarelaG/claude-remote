@@ -4,6 +4,12 @@
   become: true
   changed_when: false
 
+- name: Fix ownership of any root-owned files under home (skip symlinks to avoid read-only /usr)
+  ansible.builtin.shell:
+    cmd: find {{ home_path }} -not -type l \( -not -user {{ ansible_user }} -o -not -group {{ ansible_user }} \) -exec chown {{ ansible_user }}:{{ ansible_user }} {} +
+  become: true
+  changed_when: false
+
 - name: Create directory structure under home (owned by claude)
   ansible.builtin.file:
     path: "{{ item }}"
@@ -15,10 +21,3 @@
     - "{{ runtime_path }}"
     - "{{ claude_config_path }}"
 
-- name: Fix ownership of any root-owned files under home
-  ansible.builtin.file:
-    path: "{{ home_path }}"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    recurse: true
-  become: true

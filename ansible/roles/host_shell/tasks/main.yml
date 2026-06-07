@@ -47,6 +47,12 @@
     mode: "0644"
     backup: true
 
+- name: Deploy .tmux.conf
+  ansible.builtin.template:
+    src: tmux.conf.j2
+    dest: "{{ home_path }}/.tmux.conf"
+    mode: "0644"
+
 - name: Add zsh exec to .bashrc (fallback for bash login shells)
   ansible.builtin.blockinfile:
     path: "{{ home_path }}/.bashrc"

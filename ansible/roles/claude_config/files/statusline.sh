@@ -1,23 +1,14 @@
 #!/bin/bash
 input=$(cat)
-
 MODEL=$(echo "$input" | jq -r '.model.display_name')
 DIR=$(echo "$input" | jq -r '.workspace.current_dir')
 COST=$(echo "$input" | jq -r '.cost.total_cost_usd // 0')
 PCT=$(echo "$input" | jq -r '.context_window.used_percentage // 0' | cut -d. -f1)
+CTX_USED=$(echo "$input" | jq -r '.context_window.total_input_tokens // 0')
+CTX_TOTAL=$(echo "$input" | jq -r '.context_window.context_window_size // 0')
 DURATION_MS=$(echo "$input" | jq -r '.cost.total_duration_ms // 0')
 
 CYAN='\033[36m'; GREEN='\033[32m'; YELLOW='\033[33m'; RED='\033[31m'; RESET='\033[0m'
-
-# --- DETECCIÓN DINÁMICA DE PERFIL ---
-LINK_TARGET=$(readlink ~/.claude 2>/dev/null)
-if [[ "$LINK_TARGET" == *".claude-aws"* ]]; then
-    PROFILE_BADGE="${YELLOW}[☁️ AWS]${RESET}"
-else
-    PROFILE_BADGE="${GREEN}[👤 Personal]${RESET}"
-fi
-# ------------------------------------
-
 
 # Pick bar color based on context usage
 if [ "$PCT" -ge 90 ]; then BAR_COLOR="$RED"
@@ -28,11 +19,18 @@ FILLED=$((PCT / 10)); EMPTY=$((10 - FILLED))
 printf -v FILL "%${FILLED}s"; printf -v PAD "%${EMPTY}s"
 BAR="${FILL// /█}${PAD// /░}"
 
+fmt_tokens() {
+  local n=$1
+  if [ "$n" -ge 1000000 ]; then printf "%dM" "$((n / 1000000))"
+  elif [ "$n" -ge 1000 ]; then printf "%dk" "$((n / 1000))"
+  else printf "%s" "$n"; fi
+}
+
 MINS=$((DURATION_MS / 60000)); SECS=$(((DURATION_MS % 60000) / 1000))
 
 BRANCH=""
 git rev-parse --git-dir > /dev/null 2>&1 && BRANCH=" | 🌿 $(git branch --show-current 2>/dev/null)"
 
-echo -e "${PROFILE_BADGE} | ${CYAN}[$MODEL]${RESET} 📁 ${DIR##*/}$BRANCH"
+echo -e "${CYAN}[$MODEL]${RESET} 📁 ${DIR##*/}$BRANCH"
 COST_FMT=$(printf '$%.2f' "$COST")
-echo -e "${BAR_COLOR}${BAR}${RESET} ${PCT}% | ${YELLOW}${COST_FMT}${RESET} | ⏱️ ${MINS}m ${SECS}s"
+echo -e "${BAR_COLOR}${BAR}${RESET} ${PCT}% ($(fmt_tokens "$CTX_USED")/$(fmt_tokens "$CTX_TOTAL")) | ${YELLOW}${COST_FMT}${RESET} | ⏱️ ${MINS}m ${SECS}s"

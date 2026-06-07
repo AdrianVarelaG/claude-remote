@@ -14,19 +14,20 @@ services:
     profiles: [all]
     volumes:
       - "{{ claude_config_path }}:/home/coder/.claude"
-      - "{{ repositories_path }}:/repositories"
+      - "{{ master_repo_dest }}:/repo"
       - devcontainer-all-config:/home/coder/.config
       - "{{ home_path }}/.ssh:/home/coder/.ssh:ro"
     environment:
       - PASSWORD=${WORKSPACE_PASSWORD}
     ports:
       - "{{ base_port }}:8080"
+      - "3000:3000"
     extra_hosts:
       - "host.docker.internal:{{ host_docker_internal_ip }}"
-    command: --auth password /repositories
+    command: --auth password /repo/repositories
 
 {% for project in projects %}
-  # Per-project container: mounts only {{ project.name }}
+  # Per-project container: mounts full repo so submodule gitfiles resolve correctly
   devcontainer-{{ project.name }}:
     image: devcontainer:latest
     container_name: devcontainer-{{ project.name }}
@@ -34,7 +35,7 @@ services:
     profiles: ["{{ project.name }}"]
     volumes:
       - "{{ claude_config_path }}:/home/coder/.claude"
-      - "{{ repositories_path }}/{{ project.name }}:/workspace"
+      - "{{ master_repo_dest }}:/repo"
       - devcontainer-{{ project.name }}-config:/home/coder/.config
       - "{{ home_path }}/.ssh:/home/coder/.ssh:ro"
     environment:
@@ -43,7 +44,7 @@ services:
       - "{{ project.port }}:8080"
     extra_hosts:
       - "host.docker.internal:{{ host_docker_internal_ip }}"
-    command: --auth password /workspace
+    command: --auth password /repo/repositories/{{ project.name }}
 
 {% endfor %}
 

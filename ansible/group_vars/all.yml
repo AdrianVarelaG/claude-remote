@@ -28,8 +28,8 @@ projects:
 workspace_password_env: WORKSPACE_PASSWORD
 
 # UID/GID for the coder user inside dev containers (match TrueNAS claude user)
-container_uid: 950
-container_gid: 950
+container_uid: 3001
+container_gid: 3001
 
 # UID of the TrueNAS host claude user (used for dataset ownership)
 claude_uid: 3001
